@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fall Typing Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+
+    body {
+      font-family: 'Comic Neue', cursive;
+      background-color: #FFF8E1;
+      text-align: center;
+      padding: 40px;
+      color: #5D4037;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    #sentence {
+      font-size: 2em;
+      margin: 30px 0;
+      background-color: #FFE0B2;
+      padding: 20px;
+      border-radius: 16px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      display: inline-block;
+    }
+
+    .correct {
+      color: green;
+    }
+
+    .incorrect {
+      color: red;
+    }
+
+    #inputBox {
+      font-size: 1.5em;
+      padding: 15px;
+      width: 85%;
+      max-width: 700px;
+      border: 3px solid #FFB74D;
+      border-radius: 12px;
+    }
+
+    #feedback {
+      margin-top: 20px;
+      font-size: 1.5em;
+    }
+
+    #progress {
+      margin-top: 25px;
+      font-size: 1.3em;
+    }
+
+    #congrats {
+      font-size: 2.2em;
+      color: green;
+      margin-top: 40px;
+    }
+
+    #timer {
+      font-size: 1.5em;
+      color: #BF360C;
+      margin-top: 15px;
+    }
+
+    #resetBtn {
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 1.2em;
+      background-color: #FF7043;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Comic Neue', cursive;
+    }
+
+    #resetBtn:hover {
+      background-color: #E64A19;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🍁 Fall Typing Game 🍁</h1>
+
+  <div id="sentence">Loading sentence...</div>
+  <input type="text" id="inputBox" placeholder="Start typing here..." autocomplete="off" />
+  <div id="feedback"></div>
+  <div id="timer">Time: 0 seconds</div>
+  <div id="progress"></div>
+  <div id="congrats"></div>
+  <button id="resetBtn">🔁 Reset Game</button>
+
+  <script>
+    const sentences = [
+      "The red leaves fall from the tree.",
+      "We pick apples in the orchard.",
+      "The scarecrow watches over the pumpkins.",
+      "I like to wear warm clothes in the fall.",
+      "The wind makes the leaves dance.",
+      "Fall is a great time to play outside.",
+      "I love to eat warm apple pie in the fall.",
+      "We decorate our house with pumpkins in the fall.",
+      "The leaves change color in the fall.",
+      "The fall season is beautiful."
+    ];
+
+    let current = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let totalWords = 0;
+
+    const sentenceEl = document.getElementById('sentence');
+    const inputEl = document.getElementById('inputBox');
+    const feedbackEl = document.getElementById('feedback');
+    const progressEl = document.getElementById('progress');
+    const congratsEl = document.getElementById('congrats');
+    const timerEl = document.getElementById('timer');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function renderSentenceHighlight(typed) {
+      const target = sentences[current];
+      let result = '';
+
+      for (let i = 0; i < target.length; i++) {
+        let char = target[i];
+        if (i < typed.length) {
+          if (typed[i] === char) {
+            result += `<span class="correct">${char}</span>`;
+          } else {
+            result += `<span class="incorrect">${char}</span>`;
+          }
+        } else {
+          result += `<span>${char}</span>`;
+        }
+      }
+
+      sentenceEl.innerHTML = result;
+    }
+
+    function updateProgress() {
+      progressEl.textContent = `Sentence ${current + 1} of ${sentences.length}`;
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timerEl.textContent = `Time: ${elapsed} seconds`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function resetGame() {
+      current = 0;
+      totalWords = 0;
+      startTime = null;
+      stopTimer();
+      timerEl.textContent = 'Time: 0 seconds';
+      congratsEl.textContent = '';
+      inputEl.style.display = '';
+      sentenceEl.style.display = '';
+      progressEl.style.display = '';
+      feedbackEl.style.display = '';
+      inputEl.style.borderColor = '#FFB74D';
+      loadSentence();
+    }
+
+    function loadSentence() {
+      renderSentenceHighlight('');
+      inputEl.value = '';
+      inputEl.focus();
+      feedbackEl.textContent = '';
+      updateProgress();
+    }
+
+    function calculateWPM(elapsedSeconds) {
+      const elapsedMinutes = elapsedSeconds / 60;
+      return Math.round(totalWords / elapsedMinutes);
+    }
+
+    inputEl.addEventListener('input', () => {
+      const typed = inputEl.value;
+      const target = sentences[current];
+
+      renderSentenceHighlight(typed);
+
+      if (startTime === null) startTimer();
+
+      if (typed === target) {
+        totalWords += target.split(/\s+/).length;
+        current++;
+
+        if (current < sentences.length) {
+          setTimeout(loadSentence, 500);
+        } else {
+          stopTimer();
+          const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+          const wpm = calculateWPM(elapsedSeconds);
+
+          inputEl.style.display = 'none';
+          sentenceEl.style.display = 'none';
+          progressEl.style.display = 'none';
+          feedbackEl.style.display = 'none';
+          congratsEl.innerHTML = `
+            🎉 Great job! You finished all the sentences! 🎉<br>
+            🕒 Time: ${elapsedSeconds} seconds<br>
+            ⌨️ WPM: <strong>${wpm}</strong>
+          `;
+        }
+      }
+    });
+
+    resetBtn.addEventListener('click', resetGame);
+    window.onload = resetGame;
+  </script>
+</body>
+</html>
